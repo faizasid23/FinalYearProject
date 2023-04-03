@@ -27,7 +27,6 @@ import {
 } from "../../apis/user";
 import { updateAuthorizationToken } from "../../apis/axiosConfig";
 import { setUser } from "../../redux/ActionCreators";
-import FullscreenLoader from "../FullscreenLoader";
 // Wrapping our login screen in this component
 import LoginContainer from "../AuthScreen/";
 
@@ -35,43 +34,25 @@ class LoginForm extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      // states for login form
       email: "",
       password: "",
-      isRemember: true,
       showPassword: false,
-      resend_time: 0,
-      resend_time_limit: 0,
-      isCodeSending: false,
-      isCodeVerifying: false,
-      codeVerifyModal: false,
+      role: this.getRole(),
       errors: {},
       submitMessage: false,
-      isSubmitLoading: false,
-      role: this.getRole(),
-      isFullScreenLoading: false,
-      googleProblem: false,
-      showPasswordReset: false
+      isSubmitLoading: false
     };
-    this.timer = null;
     this.INPUTS = {
       email: {
         rules: { required: true, email: true, maxLength: 254 },
-        errorMessage: "Provide an email address",
+        errorMessage: "Provide your GSK email address. ",
       },
       password: {
         rules: { required: true },
-        errorMessage: "Provide a password"
+        errorMessage: "Provide a password. "
       }
     };
-  }
-
-  componentDidMount = () => {
-    // getAppSettings().then((result) => {
-    //   result.forEach((item) => {
-    //     if (item.key === "resend_time")
-    //       this.setState({ resend_time_limit: parseInt(item.value) ?? 30 })
-    //   });
-    // })
   }
 
   getRole = () => {
@@ -80,8 +61,8 @@ class LoginForm extends Component {
     switch (role.toLowerCase()) {
       case "manager":
         return "manager";
-      case "admin":
-        return "admin";
+      case "student":
+        return "student";
       default:
         return "student";
     }
@@ -130,10 +111,6 @@ class LoginForm extends Component {
     this.setState({ [e.target.name]: e.target.value });
   };
 
-  handleInputToogle = (checkbox) => {
-    this.setState({ [checkbox]: !this.state[checkbox] });
-  };
-
   handleRoleSwitch = () => {
     let role = this.state.role === "student" ? "manager" : "student";
     // update query params
@@ -145,29 +122,25 @@ class LoginForm extends Component {
 
   handleLoginClick = () => {
     let errors = this.validateAll();
-    if (Object.keys(errors).length !== 0) {
-      this.setState({ errors: errors });
-    } else {
-      this.setState({ isSubmitLoading: true, submitMessage: false });
-      // api call and show status
-      let callback = null;
-      // assign function for login
-      switch (this.state.role) {
-        case "manager":
-          callback = loginManager;
-          break;
-        default:
-          callback = loginStudent;
-          break;
-      }
 
-      callback({ email: this.state.email, password: this.state.password }).then((result) => {
+    // if there are errors set state and show errors
+    if (Object.keys(errors).length !== 0) this.setState({ errors: errors });
+    // else hit the api
+    else {
+      this.setState({ isSubmitLoading: true, submitMessage: false });
+
+      // destructure the state to get textfield values for sending to the server
+      let { email, password, role } = this.state;
+
+      // api call depending on who is logging in 
+      let apiCall = role === "student" ? loginStudent : loginManager;
+
+      apiCall({ email, password }).then((result) => {
         if (result.status === "success") {
-          // if (result?.data?.user?.is_2fa_enabled === 1) this.handle2fa()
-          // else {
+          // if result is successful perform the login action
           this.setState({ isSubmitLoading: false }, () => this.performLogin(result))
-          // }
         } else {
+          // otherwise show the error states
           this.setState({
             isSubmitLoading: false,
             errors: result.errors ?? {},
@@ -181,96 +154,25 @@ class LoginForm extends Component {
     }
   };
 
-  reduceSecond = () => {
-    let resend_time = this.state.resend_time - 1
-
-    this.setState({ resend_time: resend_time })
-
-    if (resend_time === 0) clearInterval(this.timer);
-  };
-
-  handleCodeModalClose = () => {
-    clearInterval(this.timer)
-    this.setState({
-      errors: {},
-      resend_time: 0,
-      codeVerifyModal: false
-    })
-  }
-
-  handleVerifyCode = (code) => {
-    this.setState({ isCodeVerifying: true })
-
-    let params = {
-      email: this.state.email,
-      password: this.state.password,
-      code
-    }
-
-    let callback;
-    switch (this.state.role) {
-      case "manager":
-        callback = loginManager;
-        break;
-      default:
-        callback = loginStudent;
-        break;
-    }
-
-    callback(params).then((result) => {
-      if (result.status === "success") {
-        this.setState({
-          codeVerifyModal: false,
-          isCodeVerifying: false,
-        }, () => this.performLogin(result));
-      } else {
-        this.setState({
-          isCodeVerifying: false,
-          errors: result.errors ?? {}
-        });
-      }
-    }).catch((err) => {
-      this.setState({
-        codeVerifyModal: false,
-        isCodeVerifying: false,
-        submitMessage: {
-          status: "error",
-          message: err.message ?? "Some error has occured, please try again later."
-        }
-      });
-    });
-  }
-
   performLogin = (result) => {
-    // add item to localhost
+    // Add the user & token to browsers localStorage
     localStorage.clear();
     localStorage.setItem("user", JSON.stringify(result.data.user));
     localStorage.setItem("user_verif", result.data.token);
     localStorage.setItem("user_role", this.state.role);
-    localStorage.setItem("skip_2fa", false);
-    // // update token
+    // update the auth token in the header (for requests)
     updateAuthorizationToken(result.data.token);
-    if (this.state.role === "student")
-      this.props.setstudentInfo(result.data.student_info); // wallet info etc
-    if (this.state.role === "manager")
-      this.props.setmanagerInfo(result.data.card_details); // wallet info etc
-    // // dispatch
+    // also dispatch and store the user details in the redux store
     this.props.setUser({
       ...result.data,
-      subRole: result.data.staff_role,
       role: this.state.role,
       isVerified: true,
-      isVerifying: false,
+      isVerifying: false
     });
 
-    // redirect
+    // redirect to the dashboard of the user
     this.props.history(`/${this.state.role}/dashboard`);
   };
-
-  handleLink = (e, link) => {
-    e.preventDefault();
-    this.props.history(link);
-  }
 
   render() {
     let { classes } = this.props;
@@ -291,7 +193,7 @@ class LoginForm extends Component {
           <TextField
             required
             variant="outlined"
-            label="Email"
+            label="GSK Email"
             tabIndex={1}
             name="email"
             onChange={this.handleInputChange}
@@ -323,8 +225,7 @@ class LoginForm extends Component {
                     onClick={() => this.setState({ showPassword: !this.state.showPassword })}
                     edge="end"
                   >
-                    {this.state.showPassword ? <VisibilityIcon />
-                      : <VisibilityOffIcon />}
+                    {this.state.showPassword ? <VisibilityIcon /> : <VisibilityOffIcon />}
                   </IconButton>
                 </InputAdornment>
               ),
@@ -333,7 +234,6 @@ class LoginForm extends Component {
 
           {this.state.submitMessage && (
             <Alert
-              className={classes.submitMessage}
               variant="standard"
               severity={this.state.submitMessage.status}
               onClose={this.clearSubmitMessage}
@@ -345,37 +245,31 @@ class LoginForm extends Component {
         {/* Form Fields End */}
 
         {/* Login button */}
-        <ButtonBase
-          type="submit"
-          tabIndex={3}
-          class={classes.submitButton}
-          onClick={this.state.isSubmitLoading ? () => 1 : this.handleLoginClick}
-          disabled={this.state.isSubmitLoading}
-        >
-          {this.state.isSubmitLoading ? (
-            <CircularProgress
-              style={{ color: "#fff", height: "2.5rem", width: "2.5rem" }}
-            />
-          ) : (
+        {this.state.isSubmitLoading ? (
+          <CircularProgress
+            style={{ color: "#fff", height: "2.5rem", width: "2.5rem" }}
+          />
+        ) : (
+          <ButtonBase
+            tabIndex={7}
+            class={classes.submitButton}
+            onClick={this.handleLoginClick}
+          >
             <Typography>LOGIN</Typography>
-          )}
-        </ButtonBase>
-
-        {this.state.role !== "admin" && this.state.googleProblem === false && (
-          <div className={classes.alreadyAccountContainer}>
-            <Typography>
-              Don't have an account?
-              <Link
-                className={classes.linkText}
-                to={`/register?role=${this.state.role}`}
-              >
-                &nbsp; Register
-              </Link>
-            </Typography>
-          </div>
+          </ButtonBase>
         )}
-        {/* Images slider */}
-        {this.state.isFullScreenLoading === true && <FullscreenLoader />}
+
+        <div className={classes.alreadyAccountContainer}>
+          <Typography>
+            Don't have an account?
+            <Link
+              className={classes.linkText}
+              to={`/register?role=${this.state.role}`}
+            >
+              &nbsp; Register
+            </Link>
+          </Typography>
+        </div>
       </LoginContainer>
     );
   }
@@ -389,21 +283,10 @@ const materialStyles = (theme) => ({
     display: "flex",
     flexDirection: "column",
     "& > *": {
-      marginBottom: "2.375rem !important",
+      marginBottom: "1.375rem !important",
     },
     "& .MuiTextField-root > .MuiFormHelperText-root": {
       marginLeft: 2, marginRight: 0
-    }
-  },
-  submitMessage: {
-    "& .MuiAlert-icon": {
-      marginRight: "1rem",
-      alignItems: 'center',
-    },
-    "& .MuiAlert-message": {
-      alignSelf: 'center',
-      lineHeight: '1.5rem',
-      padding: '0.5rem 0rem'
     }
   },
   alreadyAccountContainer: {
@@ -420,7 +303,8 @@ const materialStyles = (theme) => ({
     width: "100%",
     height: "3.75rem",
     borderRadius: "0.325rem",
-    border:'none',
+    border: 'none',
+    cursor: 'pointer',
     "& > p": { color: "#fff" }
   },
   linkText: {

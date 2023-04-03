@@ -73,10 +73,6 @@ const materialStyles = (theme) => ({
     maxWidth: "10rem",
     marginBottom: "1.25rem",
     cursor: "pointer",
-    transition: theme.transitions.create(["transform"], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.shortest,
-    }),
     "&.disabled:hover": { transform: "none" },
   },
   inputHalfWidth: {
@@ -105,8 +101,8 @@ const materialStyles = (theme) => ({
   },
   outlined: {
     backgroundColor: "transparent",
-    border: "2px solid #C1C336",
-    color: "#C1C336",
+    border: `2px solid ${theme.palette.primary.main}`,
+    color: theme.palette.primary.main,
     boxSizing: "border-box",
   },
   fullWidth: {

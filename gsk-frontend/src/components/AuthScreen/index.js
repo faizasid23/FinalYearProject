@@ -92,7 +92,6 @@ const LoginContainer = (props) => {
 const containerStyles = (theme) => ({
   container: {
     display: "flex",
-    alignItems: "center",
     width: "100%",
     minHeight: "100vh",
     backgroundColor: theme.palette.primary.light

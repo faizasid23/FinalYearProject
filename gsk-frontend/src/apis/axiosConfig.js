@@ -18,7 +18,6 @@ axios.interceptors.response.use((res) => {
             await localStorage.removeItem("user");
             await localStorage.removeItem("user_role");
             await localStorage.removeItem("user_verif");
-            await localStorage.removeItem("skip_2fa");
             if (clearReduxCallback !== undefined) {
                 clearReduxCallback();
             }

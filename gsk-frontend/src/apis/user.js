@@ -35,7 +35,7 @@ export const loginStudent = (data) => {
                 };
             }
         }).catch((err) => {
-            return { status: "error", message: "Some problem occured. Please check your internet connection and try again later." };
+            return { status: "error", message: "Some problem occured." };
         });
     return result;
 };
@@ -58,7 +58,7 @@ export const loginManager = (data) => {
                 };
             }
         }).catch((err) => {
-            return { status: "error", message: "Some problem occured. Please check your internet connection and try again later." };
+            return { status: "error", message: "Some problem occured." };
         });
     return result;
 };

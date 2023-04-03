@@ -7,6 +7,7 @@ import { withStyles } from "@mui/styles";
 // Importing Icons/Images for our UI
 import { ReactComponent as StudentAvatar } from "../../assets/images/student.svg";
 import { ReactComponent as ManagerAvatar } from "../../assets/images/manager.svg";
+import GSK_LOGO from "../../assets/images/GSK_logo.png";
 // importing reusable components 
 import RoundedButton from "../RoundedButton";
 
@@ -19,6 +20,7 @@ const Homepage = (props) => {
         <div className={classes.topBackground} />
         <div className={classes.containerInner}>
           <div className={classes.heading}>
+            <img alt="GSK Logo" src={GSK_LOGO} />
             <Typography>Welcome to IP Workday System. Choose your role below</Typography>
           </div>
           <div className={classes.cardsContainer}>
@@ -76,11 +78,11 @@ const Homepage = (props) => {
 
 const materialStyles = (theme) => ({
   main: {
-    backgroundColor: "#F5F5F5",
+    backgroundColor: theme.palette.primary.dark,
     position: "relative",
   },
   topBackground: {
-    backgroundColor: theme.palette.primary.main,
+    backgroundColor: "#F5F5F5",
     zIndex: 1,
     height: "50vh",
     width: "100%",
@@ -100,14 +102,19 @@ const materialStyles = (theme) => ({
   containerInner: {
     display: "flex",
     flexDirection: "column",
-    width: "100%",
+    width: "100%"
   },
   // heading
   heading: {
     textAlign: "center",
     marginBottom: "3rem",
     marginTop: "2rem",
-    color: "white",
+    // color: "white",
+    "& > :first-child": {
+      width: "11rem",
+      objectFit: "cover",
+      marginBottom: "1rem",
+    },
     "& > p": {
       fontSize: '2rem'
     }

@@ -5,7 +5,6 @@ import { connect } from "react-redux";
 import { Helmet } from "react-helmet";
 // importing 3rd party libraries
 import clonedeep from "lodash.clonedeep";
-import moment from "moment";
 import queryString from "query-string";
 import {
   Typography,
@@ -17,11 +16,9 @@ import {
 } from "@mui/material";
 import { withStyles } from "@mui/styles";
 import Alert from "@mui/material/Alert";
-import { Autocomplete } from "@mui/material/";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 // importing our APIs, utilities and configurations
-import { getAutocompleteValue } from "../../utils/common";
 import { runValidator } from "../../utils/validations";
 import { withRouter } from "../../utils/router";
 import {
@@ -33,34 +30,27 @@ import { setUser } from "../../redux/ActionCreators";
 // Wrapping our Register screen in this component
 import RegisterContainer from "../AuthScreen/";
 
-
 class RegisterForm extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      // states for the textfields which are then sent to the backend
       first_name: "",
       last_name: "",
+      mudid: "",
       email: "",
       password: "",
       password_confirmation: "",
       role: this.getRole(),
       showPassword: false,
       showConfirmPassword: false,
-      sources: [],
-      source_id: null,
-      // if the role is manager
-      phone: "",
-      // if the role is student
-      country_id: null,
-      coupon_code: "",
-      countries: [],
+      // validation errors are stored in this state
       errors: {},
+      // states for the toast message and loader while API requests are made
       submitMessage: false,
-      isSubmitLoading: false,
-      googleProblem: false,
-      isFullScreenLoading: false
+      isSubmitLoading: false
     };
-
+    // this is configuration state for the validation which we will feed to the validator 
     this.INPUTS = {
       first_name: {
         rules: { required: true, name: true, maxLength: 20 },
@@ -70,52 +60,27 @@ class RegisterForm extends Component {
         rules: { required: true, name: true, maxLength: 20 },
         errorMessage: "Provide your last name. "
       },
+      mudid: {
+        rules: { required: true, maxLength: 20 },
+        errorMessage: "Provide your MUDID. "
+      },
       email: {
         rules: { required: true, email: true, maxLength: 254 },
-        errorMessage: "Provide your active email address. "
+        errorMessage: "Provide your GSK email address. "
       },
       password: {
-        rules: {
-          required: true,
-          regex: new RegExp("(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{8,})")
-        },
+        rules: { required: true },
         errorMessage: "Provide a password. "
       },
       password_confirmation: {
         rules: { required: true },
         errorMessage: "Provide a confirmation password. "
-      },
-      country_id: {
-        rules: { required: true },
-        errorMessage: "Select a country. "
-      },
-      coupon_code: {
-        rules: { required: false, alphanumeric: true, minLength: 5 },
-        errorMessage: "Provide a valid code. "
-      },
-      phone: {
-        rules: { required: true },
-        errorMessage: "Provide a phone number. "
-      },
-      source_id: {
-        rules: { required: true },
-        errorMessage: "Provide a source. "
       }
     };
   }
 
   componentDidMount = () => {
     window.scrollTo(0, 0);
-    // getCountriesForPopulates().then((result) => {
-    //   if (result) this.setState({ countries: result.filter((item) => item.name === "Pakistan") ?? [] });
-    // });
-    // getSourcesForPopulates().then((result) => this.setState({ sources: result ?? [] }));
-
-    // if (this.state.role === "student") delete this.INPUTS.phone;
-    // else {
-    //   delete this.INPUTS.country_id;
-    //   delete this.INPUTS.coupon_code;
-    // }
   };
 
   clearErrorIfExists = (name) => {
@@ -132,26 +97,7 @@ class RegisterForm extends Component {
     let queryParams = queryString.parse(this.props.location.search);
     queryParams.role = role;
 
-    if (role === "student") {
-      delete this.INPUTS.phone;
-      this.INPUTS.country_id = {
-        rules: { required: true },
-        errorMessage: "Select a country. "
-      };
-      this.INPUTS.coupon_code = {
-        rules: { required: false, alphanumeric: true, minLength: 5 },
-        errorMessage: "Provide a valid code. "
-      };
-    } else {
-      delete this.INPUTS.country_id;
-      delete this.INPUTS.coupon_code;
-      this.INPUTS.phone = {
-        rules: { required: true },
-        errorMessage: "Provide a phone number. "
-      };
-    }
-
-    this.props.router.history(`${window.location.pathname}?${queryString.stringify(queryParams)}`);
+    this.props?.history(`${window.location.pathname}?${queryString.stringify(queryParams)}`);
     this.setState({ role });
   };
 
@@ -191,7 +137,7 @@ class RegisterForm extends Component {
           password_confirmation: "Passwords don't match"
         }
       });
-      return
+      return;
     }
   };
 
@@ -222,132 +168,77 @@ class RegisterForm extends Component {
     this.clearErrorIfExists(e.target.name);
     this.setState({ [e.target.name]: e.target.value });
   };
-  handleInputToogle = (e) => {
-    this.clearErrorIfExists(e.target.name);
-    this.setState({ [e.target.name]: !this.state[e.target.name] });
-  };
-  handleSelectChange = (propertyName, value) => {
-    this.clearErrorIfExists(propertyName);
-
-    this.setState({
-      [propertyName]: value ? value.id : "",
-      [propertyName.slice(0, -3)]: value ? value : null,
-    });
-  };
 
   handleSubmit = () => {
     let errors = this.validateAll();
-    if (Object.keys(errors).length !== 0) {
 
-      const input = document.querySelector(`input[name=${Object.keys(errors)[0]}]`);
-      input.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-        inline: 'start',
-      });
-      this.setState({ errors: errors });
-    } else {
-      // check password and confirm password
+    // if there are errors set state and show errors
+    if (Object.keys(errors).length !== 0) this.setState({ errors: errors });
+    // else hit the api
+    else {
+      // Check password and confirm password if they match
       if (this.state.password !== this.state.password_confirmation) {
         this.setState({ errors: { password_confirmation: "Passwords don't match" } });
         return;
       }
-      let {
+      // destructure the state to get textfield values for sending to the server
+      let { first_name, last_name, email, mudid, password, password_confirmation, role } = this.state;
+
+      this.setState({ isSubmitLoading: true, submitMessage: false });
+      // api call depending on who is registering
+      let apiCall = role === "student" ? registerStudent : registerManager;
+      let params = {
         first_name,
         last_name,
         email,
+        mudid,
         password,
-        password_confirmation,
-        country_id,
-        coupon_code,
-        phone,
-        source_id,
-        role
-      } = this.state;
+        password_confirmation
+      };
 
-      let timezone = moment.tz?.guess();
-
-      this.setState({ isSubmitLoading: true, submitMessage: false });
-      // api call and show status
-      let apiCall = role === "student" ? registerStudent : registerManager;
-      let newUser = role === "student" ?
-        {
-          first_name,
-          last_name,
-          email,
-          password,
-          password_confirmation,
-          timezone,
-          country_id,
-          coupon_code,
-          source_id,
-        } : {
-          first_name,
-          last_name,
-          email,
-          password,
-          password_confirmation,
-          timezone,
-          phone,
-          source_id,
-        };
-      apiCall(newUser).then((result) => {
+      apiCall(params).then((result) => {
         if (result.status === "success")
+          // if API call was successful set state and perform login then
           this.setState(
             {
               isSubmitLoading: false,
-              submitMessage: {
-                status: result.status,
-                message: result.message,
-              },
-            },
-            () => {
-              this.performLogin(result);
-            }
+              submitMessage: { status: result.status, message: result.message, },
+            }, () => { this.performLogin(result); }
           );
         else {
+          // otherwise set error state and show what happened via toast message
           this.setState({
             isSubmitLoading: false,
-            errors: result.errors ? result.errors : {},
+            errors: result.errors ?? {},
             submitMessage: {
-              status: result.status,
-              message: result.message,
-            },
+              status: "error",
+              message: result.message
+            }
           });
         }
       }).catch((error) => {
-        this.setState({ showToast: { status: "error", message: error } });
+        this.setState({ submitMessage: { status: "error", message: error } });
       });
     }
   };
 
   performLogin = (result) => {
-    // add item to localhost
+    // Add the user & token to browsers localStorage
     localStorage.clear();
     localStorage.setItem("user", JSON.stringify(result.data.user));
     localStorage.setItem("user_verif", result.data.accessToken);
     localStorage.setItem("user_role", this.state.role);
-    localStorage.setItem("skip_2fa", false);
-    // // update token
+    // update the auth token in the header (for requests)
     updateAuthorizationToken(result.data.accessToken);
-    // if(this.state.role==='student')
-    // this.props.setstudentInfo(result.data.student_info) // wallet info etc
-    // if(this.state.role==='manager')
-    //   this.props.setmanagerInfo(result.data.card_details) // wallet info etc
-    // // dispatch
+    // also dispatch and store the user details in the redux store
     this.props.setUser({
       ...result.data,
       role: this.state.role,
       isVerified: true,
-      isVerifying: false,
+      isVerifying: false
     });
-    // redirect
-    this.props.history(`/${this.state.role}/dashboard`);
-  };
-
-  handleLink = (e, link) => {
-    e.preventDefault();
-    this.props.history(link);
+    // redirect to the dashboard of the user
+    this.props?.history(`/${this.state.role}/dashboard`);
   };
 
   render() {
@@ -357,7 +248,7 @@ class RegisterForm extends Component {
       <RegisterContainer
         role={this.state.role}
         handleRoleSwitch={this.handleRoleSwitch}
-        text={this.state.role === "manager" ? "Sign Up To Hire students" : "Sign Up To Work"}
+        text={this.state.role === "manager" ? "Sign Up To Interact With Students" : "Sign Up To Work"}
       >
         <Helmet>
           <title>
@@ -400,40 +291,68 @@ class RegisterForm extends Component {
           <TextField
             required
             variant="outlined"
-            label="Email"
-            name="email"
+            label="MUDID"
+            name="mudid"
             tabIndex={3}
+            type="text"
+            fullWidth={true}
+            onChange={this.handleInputChange}
+            onBlur={this.handleValidation}
+            inputProps={{ maxLength: 20 }}
+            onFocus={this.clearError}
+            error={this.state.errors.mudid ? true : false}
+            helperText={this.state.errors.mudid && this.state.errors.mudid}
+          />
+          <TextField
+            required
+            variant="outlined"
+            label="GSK Email"
+            name="email"
+            tabIndex={4}
             onChange={this.handleInputChange}
             onBlur={this.handleValidation}
             onFocus={this.clearError}
             inputProps={{ maxLength: 254, className: classes.input }}
             error={this.state.errors.email ? true : false}
             helperText={this.state.errors.email && this.state.errors.email}
-            FormHelperTextProps={{ className: classes.helperText }}
           />
           <div className={classes.fieldsRow}>
-            {/* <PasswordWithStrength
+            <TextField
               required
-              name="password"
+              fullWidth
               variant="outlined"
+              name="password"
               label="Password"
-              tabIndex={4}
-              value={this.state.password}
-              fullWidth={true}
+              tabIndex={5}
+              type={this.state.showPassword ? "text" : "password"}
               onChange={this.handleInputChange}
               onBlur={this.handlePasswordsValidation}
               onFocus={this.clearError}
               error={this.state.errors.password ? true : false}
               helperText={this.state.errors.password && this.state.errors.password}
-            /> */}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end" variant="filled" tabIndex={-1}>
+                    <IconButton
+                      tabIndex={-1}
+                      aria-label="toggle password visibility"
+                      onClick={() => this.setState({ showPassword: !this.state.showPassword })}
+                      edge="end"
+                    >
+                      {this.state.showPassword ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                )
+              }}
+            />
             <TextField
               required
+              fullWidth
               variant="outlined"
               label="Confirm Password"
               name="password_confirmation"
-              tabIndex={5}
+              tabIndex={6}
               type={this.state.showConfirmPassword ? "text" : "password"}
-              fullWidth={true}
               onChange={this.handleInputChange}
               onBlur={this.handlePasswordsValidation}
               onFocus={this.clearError}
@@ -451,114 +370,16 @@ class RegisterForm extends Component {
                       onClick={() => this.setState({ showConfirmPassword: !this.state.showConfirmPassword })}
                       edge="end"
                     >
-                      {this.state.showConfirmPassword ? (
-                        <VisibilityIcon />
-                      ) : (
-                        <VisibilityOffIcon />
-                      )}
+                      {this.state.showConfirmPassword ? <VisibilityIcon /> : <VisibilityOffIcon />}
                     </IconButton>
                   </InputAdornment>
                 )
               }}
             />
           </div>
-          {this.state.role === "student" && (
-            <div className={classes.fieldsRow}>
-              <Autocomplete
-                classes={{
-                  root: classes.autocompleteRoot,
-                  inputRoot: classes.selectRoot
-                }}
-                disableClearable={true}
-                fullWidth={true}
-                options={this.state.countries}
-                getOptionLabel={(option) => option.name ?? ""}
-                onChange={(e, val) => this.handleSelectChange("country_id", val)}
-                value={getAutocompleteValue(
-                  this.state.countries,
-                  this.state.country_id
-                )}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    required
-                    label="Country"
-                    type="text"
-                    name="country_id"
-                    placeholder="Select a Country"
-                    variant="outlined"
-                    tabIndex={5}
-                    className={classes.customPlaceholder}
-                    onBlur={this.handleValidation}
-                    error={this.state.errors.country_id ? true : false}
-                    helperText={this.state.errors.country_id}
-                    FormHelperTextProps={{ className: classes.helperText }}
-                  />
-                )}
-              />
-              <TextField
-                fullWidth
-                placeholder="PROMOTION CODE"
-                name="coupon_code"
-                value={this.state.coupon_code}
-                variant="outlined"
-                onChange={this.handleInputChange}
-                error={this.state.errors.coupon_code ? true : false}
-                helperText={this.state.errors.coupon_code}
-                inputProps={{ maxLength: 10 }}
-              />
-            </div>
-          )}
-          {/* {this.state.role === "manager" && (
-            <PhoneInput
-              country={"us"}
-              value={this.state.phone}
-              name="phone"
-              onBlur={this.handleValidation}
-              onChange={(phone, data, event, formattedValue) => {
-                this.clearErrorIfExists("phone");
-                this.setState({ phone });
-              }}
-              placeholder="Mobile number"
-              hasError={this.state.errors.phone ? true : false}
-              errorMessage={this.state.errors.phone}
-            />
-          )} */}
-          <Autocomplete
-            classes={{
-              root: classes.autocompleteRoot,
-              inputRoot: classes.selectRoot
-            }}
-            disableClearable={true}
-            fullWidth={true}
-            options={this.state.sources}
-            getOptionLabel={(option) => option.name ?? ""}
-            onChange={(e, val) => this.handleSelectChange("source_id", val)}
-            value={getAutocompleteValue(
-              this.state.sources,
-              this.state.source_id
-            )}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                required
-                label="How did you find us?"
-                type="text"
-                name="source_id"
-                placeholder="Select a source"
-                variant="outlined"
-                tabIndex={5}
-                className={classes.customPlaceholder}
-                onBlur={this.handleValidation}
-                error={this.state.errors.source_id ? true : false}
-                helperText={this.state.errors.source_id}
-                FormHelperTextProps={{ className: classes.helperText }}
-              />
-            )}
-          />
+          {/* for error triggering */}
           {this.state.submitMessage && (
             <Alert
-              className={classes.submitMessage}
               variant="standard"
               severity={this.state.submitMessage.status}
               onClose={this.clearSubmitMessage}
@@ -569,53 +390,20 @@ class RegisterForm extends Component {
         </div>
         {/* Form Fields End */}
 
-        {/* Login button */}
-        <ButtonBase
-          type="submit"
-          tabIndex={3}
-          className={classes.submitButton}
-          onClick={this.state.isSubmitLoading ? () => 1 : this.handleSubmit}
-          disabled={this.state.isSubmitLoading}
-        >
-          {this.state.isSubmitLoading ? (
-            <CircularProgress
-              style={{ color: "#fff", height: "2.5rem", width: "2.5rem" }}
-            />
-          ) : (
+        {/* if the api call is made show loader otherwise a button */}
+        {this.state.isSubmitLoading ? (
+          <CircularProgress
+            style={{ color: "#fff", height: "2.5rem", width: "2.5rem" }}
+          />
+        ) : (
+          <ButtonBase
+            tabIndex={7}
+            class={classes.submitButton}
+            onClick={this.handleSubmit}
+          >
             <Typography>Register</Typography>
-          )}
-        </ButtonBase>
-        {/* 
-        {this.state.googleProblem === false && (
-          <>
-            <div className={classes.dividerContainer}>
-              <div className={classes.horizontalDivider}>&nbsp;</div>
-              <Typography className={classes.dividerContainerText}>Or continue with</Typography>
-              <div className={classes.horizontalDivider}>&nbsp;</div>
-            </div>
-            <div className={classes.socialIcons}>
-              <ButtonBase>
-                <img src={FacebookIcon} style={{ width: '.8rem' }} alt="" srcset="" />
-              </ButtonBase>
-              <GoogleLogin
-                clientId="99900795968-vfq3c40lkaf7mc8fjpc69veqdttng507.apps.googleusercontent.com"
-                render={(renderProps) => (
-                  <ButtonBase onClick={renderProps.onClick} disabled={renderProps.disabled}>
-                    <img src={GoogleIcon} alt="" srcset="" />
-                  </ButtonBase>
-                )}
-                onSuccess={this.handleGoogleOAuth}
-                onFailure={this.handleGoogleOAuth}
-                cookiePolicy={'single_host_origin'}
-              />
-              <ButtonBase>
-                <img src={LinkedinIcon} alt="" srcset="" />
-              </ButtonBase>
-            </div>
-          </>
-        )} 
-      */}
-
+          </ButtonBase>
+        )}
         <div className={classes.alreadyAccountContainer}>
           <Typography>
             Already have an account?
@@ -640,63 +428,12 @@ const materialStyles = (theme) => ({
     display: "flex",
     flexDirection: "column",
     "& > *": {
-      marginBottom: "2.375rem"
+      marginBottom: "1.375rem !important"
+    },
+    "& .MuiTextField-root > .MuiFormHelperText-root": {
+      marginLeft: 2, marginRight: 0
     }
   },
-  logo: {
-    width: "12.5rem",
-    marginBottom: "3.25rem",
-    cursor: "pointer",
-    [theme.breakpoints.down(1400)]: {
-      marginBottom: "1.25rem"
-    }
-  },
-  textsContainer: {
-    marginBottom: "2.25rem",
-  },
-  loginTitle: {
-    fontSize: "3.125rem",
-    fontWeight: 500,
-    marginBottom: "1rem",
-  },
-  // dividerContainer: {
-  //   display: "flex",
-  //   justifyContent: "center",
-  //   alignItems: "center",
-  //   marginTop: "2.625rem",
-  //   marginBottom: "1.25rem",
-  // },
-  // horizontalDivider: {
-  //   height: 1,
-  //   width: "4.5rem",
-  //   borderBottom: "1px solid #8C8C8C",
-  // },
-  // dividerContainerText: {
-  //   marginRight: "0.75rem",
-  //   marginLeft: "0.75rem",
-  // },
-  // social icons
-  // socialIcons: {
-  //   display: "flex",
-  //   justifyContent: "center",
-  //   "& > *": {
-  //     height: "3.125rem",
-  //     width: "3.125rem",
-  //     display: "flex",
-  //     justifyContent: "center",
-  //     alignItems: "center",
-  //     border: "1px solid #DEE2E6",
-  //     borderRadius: "0.3125rem",
-  //     boxShadow: "3px 4px 4px rgba(150, 168, 219, 0.16)",
-  //     marginRight: "1.5rem",
-  //     "& img": {
-  //       width: "1.3rem",
-  //     },
-  //   },
-  //   "& > *:last-child": {
-  //     marginRight: 0,
-  //   },
-  // },
   alreadyAccountContainer: {
     marginTop: "2rem",
     display: "flex",
@@ -711,20 +448,8 @@ const materialStyles = (theme) => ({
       marginRight: "1.1875rem",
     },
     "& > *:last-child": {
-      marginLeft: "1.1875rem",
-    },
-    "& .MuiTextField-root > .MuiFormHelperText-root": {
-      marginLeft: 2, marginRight: 0
-    },
-    [theme.breakpoints.down("sm")]: {
-      flexDirection: "column",
-      marginBottom: 0,
-      "& > div": {
-        marginBottom: "2.375rem",
-        marginLeft: "0 !important",
-        marginRight: "0 !important",
-      },
-    },
+      marginLeft: "1.1875rem"
+    }
   },
   submitButton: {
     display: "flex",
@@ -734,17 +459,16 @@ const materialStyles = (theme) => ({
     width: "100%",
     height: "3.75rem",
     borderRadius: "0.3125rem",
-    "& > p": {
-      color: "#fff",
-    },
+    border: 'none',
+    cursor: 'pointer',
+    "& > p": { color: "#fff" }
   },
   // misc
   linkText: {
     fontWeight: 500,
     textDecoration: "none",
-    color: theme.palette.primary.main,
-  },
-  helperText: { marginLeft: 2, marginRight: 0 }
+    color: theme.palette.primary.main
+  }
 });
 
 const mapDispatchToProps = (dispatch) => {

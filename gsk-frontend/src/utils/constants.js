@@ -1,5 +1,5 @@
 const CONSTANTS = {
-    // comment uncomment urls here
+    // comment or uncomment urls here
     apiBaseURL: "https://localhost:4000/api"
 
 }
