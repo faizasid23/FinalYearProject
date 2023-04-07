@@ -28,7 +28,7 @@ import {
 import { updateAuthorizationToken } from "../../apis/axiosConfig";
 import { setUser } from "../../redux/ActionCreators";
 // Wrapping our Register screen in this component
-import RegisterContainer from "../AuthScreen/";
+import RegisterContainer from "../AuthScreen";
 
 class RegisterForm extends Component {
   constructor(props) {
@@ -225,20 +225,20 @@ class RegisterForm extends Component {
   performLogin = (result) => {
     // Add the user & token to browsers localStorage
     localStorage.clear();
-    localStorage.setItem("user", JSON.stringify(result.data.user));
-    localStorage.setItem("user_verif", result.data.accessToken);
+    localStorage.setItem("user", JSON.stringify(result.data.data.user));
+    localStorage.setItem("user_verif", result.data.token);
     localStorage.setItem("user_role", this.state.role);
     // update the auth token in the header (for requests)
-    updateAuthorizationToken(result.data.accessToken);
+    updateAuthorizationToken(result.data.token);
     // also dispatch and store the user details in the redux store
     this.props.setUser({
-      ...result.data,
+      ...result.data.data,
       role: this.state.role,
       isVerified: true,
       isVerifying: false
     });
     // redirect to the dashboard of the user
-    this.props?.history(`/${this.state.role}/dashboard`);
+    this.props.history(`/${this.state.role}/dashboard`);
   };
 
   render() {
@@ -248,7 +248,7 @@ class RegisterForm extends Component {
       <RegisterContainer
         role={this.state.role}
         handleRoleSwitch={this.handleRoleSwitch}
-        text={this.state.role === "manager" ? "Sign Up To Interact With Students" : "Sign Up To Work"}
+        text={this.state.role === "manager" ? "Sign Up" : "Sign Up To Work"}
       >
         <Helmet>
           <title>

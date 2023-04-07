@@ -1,6 +1,6 @@
 import * as ActionTypes from "../ActionTypes";
 
-export const userInfo = (
+export const user = (
     state = { user: null, role: null, isVerified: false, isVerifying: true },
     action
 ) => {
@@ -15,7 +15,7 @@ export const userInfo = (
             return { ...state, user: newUser };
         // clear the user on logout and stuff
         case ActionTypes.CLEAR_USER:
-            return { user: null, role: null, isVerified: false, isVerifying: true };
+            return { user: null, role: null, isVerified: false, isVerifying: false };
         default:
             return state;
     }

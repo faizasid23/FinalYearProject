@@ -11,3 +11,32 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+
+.pill-pending {
+  border-radius: 10px !important;
+  background-color: #fff4e6 !important;
+  color: #eb8f15 !important;
+  text-transform: capitalize;
+}
+
+.pill-processed {
+  border-radius: 10px !important;
+  background-color: #e6f0f7 !important;
+  color: #006ab3 !important;
+  text-transform: capitalize;
+}
+
+.pill-success {
+  border-radius: 10px !important;
+  background-color: #edfaef !important;
+  color: #47cb5d !important;
+  text-transform: capitalize;
+}
+
+.pill-error {
+  border-radius: 10px !important;
+  background-color: #fef1f1 !important;
+  color: #fc443e !important;
+  text-transform: capitalize;
+}

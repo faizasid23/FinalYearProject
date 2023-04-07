@@ -29,7 +29,7 @@ const materialStyles = (theme) => ({
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: "#f5f2f2",
     borderRadius: '0.325rem',
     overflow: "hidden",
     height: "3rem",
@@ -46,7 +46,6 @@ const materialStyles = (theme) => ({
     "& > p": {
       fontSize: "1rem",
       fontWeight: 500,
-      color: theme.palette.primary.main,
       transition: "color 0.25s ease-in",
     },
   },

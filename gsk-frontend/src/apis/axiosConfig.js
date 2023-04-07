@@ -9,7 +9,6 @@ const axios = Axios.create({ baseURL: CONSTANTS.apiBaseURL });
 
 axios.CancelToken = Axios.CancelToken;
 axios.interceptors.response.use((res) => {
-    localStorage.setItem("error", null);
     return res;
 },
     async (error) => {
@@ -22,8 +21,7 @@ axios.interceptors.response.use((res) => {
                 clearReduxCallback();
             }
         }
-        else localStorage.setItem("error", error.response?.status)
-        return error;
+        return error.response;
     }
 );
 

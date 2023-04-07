@@ -28,7 +28,7 @@ import {
 import { updateAuthorizationToken } from "../../apis/axiosConfig";
 import { setUser } from "../../redux/ActionCreators";
 // Wrapping our login screen in this component
-import LoginContainer from "../AuthScreen/";
+import LoginContainer from "../AuthScreen";
 
 class LoginForm extends Component {
   constructor(props) {
@@ -157,14 +157,14 @@ class LoginForm extends Component {
   performLogin = (result) => {
     // Add the user & token to browsers localStorage
     localStorage.clear();
-    localStorage.setItem("user", JSON.stringify(result.data.user));
+    localStorage.setItem("user", JSON.stringify(result.data.data.user));
     localStorage.setItem("user_verif", result.data.token);
     localStorage.setItem("user_role", this.state.role);
     // update the auth token in the header (for requests)
     updateAuthorizationToken(result.data.token);
     // also dispatch and store the user details in the redux store
     this.props.setUser({
-      ...result.data,
+      ...result.data.data,
       role: this.state.role,
       isVerified: true,
       isVerifying: false
@@ -181,7 +181,7 @@ class LoginForm extends Component {
       <LoginContainer
         role={this.state.role}
         handleRoleSwitch={this.handleRoleSwitch}
-        text="Login"
+        text="Log In"
       >
         <Helmet>
           <title>Login | GSK</title>
@@ -231,7 +231,7 @@ class LoginForm extends Component {
               ),
             }}
           />
-
+          {/* Alert / Toast messages from API hitting */}
           {this.state.submitMessage && (
             <Alert
               variant="standard"
@@ -241,24 +241,21 @@ class LoginForm extends Component {
               {this.state.submitMessage.message}
             </Alert>
           )}
+          {/* Login button */}
+          {this.state.isSubmitLoading ? (
+            <CircularProgress
+              style={{ color: "#F36633", height: "2.5rem", width: "2.5rem", alignSelf: 'center' }}
+            />
+          ) : (
+            <ButtonBase
+              tabIndex={7}
+              class={classes.submitButton}
+              onClick={this.handleLoginClick}
+            >
+              <Typography>LOGIN</Typography>
+            </ButtonBase>
+          )}
         </div>
-        {/* Form Fields End */}
-
-        {/* Login button */}
-        {this.state.isSubmitLoading ? (
-          <CircularProgress
-            style={{ color: "#fff", height: "2.5rem", width: "2.5rem" }}
-          />
-        ) : (
-          <ButtonBase
-            tabIndex={7}
-            class={classes.submitButton}
-            onClick={this.handleLoginClick}
-          >
-            <Typography>LOGIN</Typography>
-          </ButtonBase>
-        )}
-
         <div className={classes.alreadyAccountContainer}>
           <Typography>
             Don't have an account?

@@ -1,6 +1,6 @@
 const CONSTANTS = {
     // comment or uncomment urls here
-    apiBaseURL: "https://localhost:4000/api"
+    apiBaseURL: "http://localhost:4000/api"
 
 }
 

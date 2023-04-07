@@ -6,16 +6,15 @@ import { withStyles } from "@mui/styles";
 import { withRouter } from "../../utils/router";
 import RoleSwitch from "../RoleSwitch";
 // We are using free illustration images for bg from freepik for aesthetic user experience
-import StudentView from "../../assets/images/student.jpg";
-import ManagerView from "../../assets/images/manager.jpg";
+import GSK_LOGO from "../../assets/images/GSK_logo.png";
+import Footer from "../Footer";
 
 // This is the form container for sign up
 const Form = (props) => {
   let { classes } = props;
 
   useEffect(() => {
-    document.querySelector("body").className = "white-bc";
-    return () => document.querySelector("body").classList.remove("white-bc");
+    window.scrollTo(0, 0);
   });
 
   return (
@@ -38,7 +37,6 @@ const Form = (props) => {
 const formStyles = (theme) => ({
   formContainer: {
     width: "50%",
-    height: "100%",
     padding: "2rem 4.75rem",
     display: "flex",
     justifyContent: "center",
@@ -46,10 +44,17 @@ const formStyles = (theme) => ({
   },
   formInner: {
     width: "100%",
-    maxWidth: "31rem",
+    minHeight: "32rem",
+    maxWidth: "28rem",
+    padding: "2rem 2.25rem 2rem 2.25rem",
+    boxShadow: "0px 2px 8px 3px rgba(0,0,0,0.1)",
+    borderRadius: "0.425rem",
+    backgroundColor: "#fff",
+    alignSelf: 'center'
   },
   textsContainer: {
     marginBottom: "2.25rem",
+    textAlign: 'center'
   },
   loginTitle: {
     fontSize: "2.0rem",
@@ -66,26 +71,21 @@ const LoginContainer = (props) => {
   let { role, text, handleRoleSwitch } = props;
 
   return (
-    <div className={classes.container}>
-      <FormStyled role={role} text={text} handleRoleSwitch={handleRoleSwitch}>
-        {props.children}
-      </FormStyled>
-      <div className={classes.sliderContainer}>
-        {/* images slider */}
-        <div className={classes.imageContainer}>
-          <div className={classes.absoluteContent}></div>
-          <Fade in={role === "manager" || role === "student"} key={role}>
-            {role === "manager" ? (
-              // <a href="https://www.freepik.com/free-vector/businessman-concept-illustration_6610839.htm#query=manager&position=1&from_view=search&track=sph#position=1&query=manager">Image by storyset</a> on Freepik
-              <img alt="Manager Illustration" src={ManagerView} width='500' />
-            ) : (
-              // <a href="https://www.freepik.com/free-vector/learning-concept-illustration_14230944.htm#query=student&position=1&from_view=search&track=sph">Image by storyset</a> on Freepik
-              <img alt="Student Illustration" src={StudentView} width='500' />
-            )}
-          </Fade>
+    <>
+      <div className={classes.container}>
+        <FormStyled role={role} text={text} handleRoleSwitch={handleRoleSwitch}>
+          {props.children}
+        </FormStyled>
+        <div className={classes.sliderContainer}>
+          {/* images slider */}
+          <div className={classes.imageContainer}>
+            <div className={classes.absoluteContent}></div>
+            <img alt="GSK Logo" src={GSK_LOGO} width='500' />
+          </div>
         </div>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 };
 
@@ -94,13 +94,12 @@ const containerStyles = (theme) => ({
     display: "flex",
     width: "100%",
     minHeight: "100vh",
-    backgroundColor: theme.palette.primary.light
+    backgroundColor: "#fff"
   },
   // images slider
   sliderContainer: {
     width: "50%",
     height: "100vh",
-    position: "fixed",
     right: 0,
     display: "flex",
     backgroundColor: '#fff'

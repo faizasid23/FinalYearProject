@@ -3,7 +3,7 @@ import { axios } from "./axiosConfig";
 
 export const validateToken = (role, data) => {
     let result = axios
-        .get(`${role}/validate-token`, {
+        .get(`auth/${role}/validate-token`, {
             headers: {
                 Authorization: "Bearer " + data,
             },
@@ -19,12 +19,12 @@ export const validateToken = (role, data) => {
 
 export const loginStudent = (data) => {
     let result = axios
-        .post(`student/login`, data)
+        .post(`auth/student/login`, data)
         .then((res) => {
             if (res.data.status === "success") {
                 return {
                     status: "success",
-                    data: res.data.data,
+                    data: res.data,
                     message: "Student logged successfully",
                 };
             } else {
@@ -65,7 +65,7 @@ export const loginManager = (data) => {
 
 export const registerManager = (data) => {
     let result = axios
-        .post(`manager/register`, data)
+        .post(`auth/manager/register`, data)
         .then((res) => {
             if (res.data.status === "success") {
                 return {
@@ -89,12 +89,12 @@ export const registerManager = (data) => {
 
 export const registerStudent = (data) => {
     let result = axios
-        .post(`student/register`, data)
+        .post(`auth/student/register`, data)
         .then((res) => {
             if (res.data.status === "success") {
                 return {
                     status: "success",
-                    data: res.data.data,
+                    data: res.data,
                     message: "Student registered successfully",
                 };
             } else {

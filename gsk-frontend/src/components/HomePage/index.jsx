@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { withRouter } from '../../utils/router';
 // Importing a library material UI for aesthetics
@@ -10,24 +10,28 @@ import { ReactComponent as ManagerAvatar } from "../../assets/images/manager.svg
 import GSK_LOGO from "../../assets/images/GSK_logo.png";
 // importing reusable components 
 import RoundedButton from "../RoundedButton";
+import Footer from "../Footer";
 
 const Homepage = (props) => {
   let { classes } = props;
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  })
+
   return (
-    <div className={classes.main}>
+    <>
       <div className={classes.container}>
-        <div className={classes.topBackground} />
         <div className={classes.containerInner}>
           <div className={classes.heading}>
             <img alt="GSK Logo" src={GSK_LOGO} />
-            <Typography>Welcome to IP Workday System. Choose your role below</Typography>
+            <Typography>Welcome to IP Workday System</Typography>
           </div>
           <div className={classes.cardsContainer}>
             <div className={classes.cards}>
               <div className={classes.card}>
                 <ManagerAvatar height={"9rem"} width={"7rem"} />
-                <Typography>I am a manager</Typography>
+                <Typography>manager</Typography>
                 <div className={classes.cardButton}>
                   <RoundedButton
                     variant="outlined"
@@ -49,7 +53,7 @@ const Homepage = (props) => {
 
               <div className={classes.card}>
                 <StudentAvatar height={"9rem"} width={"9rem"} />
-                <Typography>I am a student</Typography>
+                <Typography>IP student</Typography>
                 <div className={classes.cardButton}>
                   <RoundedButton
                     variant="outlined"
@@ -72,23 +76,12 @@ const Homepage = (props) => {
           </div>
         </div>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 };
 
 const materialStyles = (theme) => ({
-  main: {
-    backgroundColor: theme.palette.primary.dark,
-    position: "relative",
-  },
-  topBackground: {
-    backgroundColor: "#F5F5F5",
-    zIndex: 1,
-    height: "50vh",
-    width: "100%",
-    position: "absolute",
-    top: 0
-  },
   container: {
     display: "flex",
     minHeight: "100vh",
@@ -116,7 +109,7 @@ const materialStyles = (theme) => ({
       marginBottom: "1rem",
     },
     "& > p": {
-      fontSize: '2rem'
+      fontSize: '1.5rem'
     }
   },
   cardsContainer: { zIndex: 10 },
@@ -134,7 +127,7 @@ const materialStyles = (theme) => ({
     alignItems: "center",
     width: "24rem",
     backgroundColor: "#fff",
-    boxShadow: "rgba(0, 0, 0, 0.05) 0px 4px 10px 3px",
+    boxShadow: "0px 2px 12px 4px rgba(0, 0, 0, 0.15)",
     borderRadius: "0.625rem",
     padding: "2.5rem",
     marginBottom: "5rem",

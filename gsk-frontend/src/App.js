@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
 // importing elements from latest react router dom to route our application
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { withRouter } from "./utils/router"
 // importing stuff for redux-ing our app
 import { connect, Provider } from "react-redux";
@@ -14,15 +14,20 @@ import FullscreenLoader from "./components/FullscreenLoader";
 import LoginForm from "./components/LoginForm/";
 import RegisterForm from "./components/RegisterForm/";
 import Homepage from "./components/HomePage/";
+import NotFound from "./components/NotFound";
 // API calls
 import { validateToken } from "./apis/user";
 import { updateAuthorizationToken, setClearRedux } from "./apis/axiosConfig";
 // UI 3rd party lib overriding
 import { ThemeProvider } from "@mui/styles";
 import { createTheme } from '@mui/material/styles';
+// importing subroutes from sections
+import { StudentRoutes } from "./sections/student/";
+import { ManagerRoutes } from "./sections/manager/";
+// importing these providers to use with date time library
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 
-// const Student = React.lazy(() => import("./sections/student/"));
-// const Manager = React.lazy(() => import("./sections/manager/"));
 
 // Here we are Overriding material UI theme basics
 const theme = createTheme({
@@ -50,9 +55,9 @@ const theme = createTheme({
       contrastText: "#fff",
     },
     secondary: {
-      main: "#FC443E",
-      dark: "#EC3A34",
-      light: "#FB5954",
+      main: "#343541",
+      dark: "#8f8f8f87",
+      light: "#202123",
       contrastText: "#fff"
     }
   }
@@ -62,11 +67,8 @@ class AppUI extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      isLoading: true,
       hasError: false,
-      isSubmitLoading: false,
-      role: "",
-      isUnauthorized: false
+      role: ""
     };
   }
 
@@ -88,32 +90,32 @@ class AppUI extends React.Component {
         // redirect to login if some issue
         let userJson = JSON.parse(user);
 
-        if (result.response && result.response.status === 401) {
+        if (result.status === 500) {
+          localStorage.removeItem("user");
+          localStorage.removeItem("user_role");
+          localStorage.removeItem("user_verif");
           this.props.setUser({
-            user: userJson ?? null,
+            user: null,
+            role: null,
             isVerified: false,
-            isVerifying: false,
-            role: role
+            isVerifying: false
           });
+          this.props.history(`/`);
           return;
         }
-
-        if (result.data && result.data.status === "success") {
+        else if (result?.data?.status === "success") {
           if (result.data.data !== undefined)
             userJson = { ...userJson, ...result.data.data.user };
 
           // update auth token
           updateAuthorizationToken(token);
-          // if (role === "employee") this.props.setEmployeeInfo(result.data.data);
-          // else if (role === "employer") this.props.setEmployerInfo(result.data.data);
 
           // store user in redux store
           this.props.setUser({
-            user: userJson ? userJson : null,
+            user: userJson ?? null,
             isVerified: true,
             isVerifying: false,
-            role: role,
-            subRole: result.data?.staff_role,
+            role: role
           });
 
           // redirect
@@ -121,20 +123,9 @@ class AppUI extends React.Component {
           // eslint-disable-next-line
           let re = `\/${role}\/`;
           let results = path.match(re);
-          if (results === null) this.props.history.push(`/${role}/dashboard`);
-        } else if (result.data && result.data?.status === "failure") {
-          localStorage.removeItem("user");
-          localStorage.removeItem("user_role");
-          localStorage.removeItem("user_verif");
-          // localStorage.removeItem("skip_2fa");
-          this.props.setUser({
-            user: null,
-            role: null,
-            isVerified: false,
-            isVerifying: false,
-          });
-        } else {
-          // TODO: allow app if the user is offline
+          if (results === null) this.props.history(`/${role}/dashboard`);
+        }
+        else {
           this.props.setUser({
             user: userJson ?? null,
             isVerified: true,
@@ -149,28 +140,40 @@ class AppUI extends React.Component {
       localStorage.removeItem("user");
       localStorage.removeItem("user_role");
       localStorage.removeItem("user_verif");
-      // localStorage.removeItem("skip_2fa");
       this.props.setUser({
         user: null,
         role: null,
         isVerified: false,
         isVerifying: false
       });
+      this.props.history(`/`);
     }
   }
 
   render() {
+    let { isVerifying, isVerified } = this.props;
+
     return (
-      <ThemeProvider theme={theme}>
-        <Routes>
-          <Route exact path="/" element={<Homepage />} />
-          <Route path="/login" element={<LoginForm fullScreen />} />
-          <Route path="/register" element={<RegisterForm fullScreen />} />
-          <Route path="/admin/login" element={<LoginForm fullScreen />} />
-          <Route path="/admin" element={() => <Navigate to="/admin/login?role=admin" replace />} />
-          <Route path="/*" element={() => <Navigate to="/" replace />} />
-        </Routes>
-      </ThemeProvider>
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <ThemeProvider theme={theme}>
+          {isVerifying ? <FullscreenLoader />
+            : (
+              isVerified ?
+                <Routes>
+                  <Route path="/student/*" element={<StudentRoutes />} />
+                  <Route path="/manager/*" element={<ManagerRoutes />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                :
+                <Routes>
+                  <Route exact path="/" element={<Homepage />} />
+                  <Route path="/login" element={<LoginForm fullScreen key={this.props.location.key} />} />
+                  <Route path="/register" element={<RegisterForm fullScreen key={this.props.location.key} />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+            )}
+        </ThemeProvider>
+      </LocalizationProvider>
     );
   }
 }
