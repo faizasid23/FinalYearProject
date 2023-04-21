@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import moment from "moment";
 import { withRouter } from '../../../../utils/router'
-import { Hidden, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import { withStyles } from "@mui/styles";
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -15,10 +15,10 @@ class Card extends Component {
   render() {
     let {
       classes,
-      index,
+      key,
       date_applied,
       leave_type,
-      leave_date,
+      start_date,
       reason,
       end_date,
       status,
@@ -26,10 +26,10 @@ class Card extends Component {
     } = this.props;
 
     return (
-      <div className={classes.root} key={index}>
+      <div className={classes.root} key={key}>
         <div className={classes.body}>
           <div className={classes.left}>
-            <Typography className={classes.jobTitle}>
+            <Typography class={classes.jobTitle}>
               {leave_type} Leave
             </Typography>
 
@@ -39,14 +39,14 @@ class Card extends Component {
                   className={classes.infoRowItem}
                   style={{ minWidth: "9.5rem" }}
                 >
-                  <CalendarMonthIcon fill="#6C63FF" />
+                  <CalendarMonthIcon htmlColor="#6C63FF" />
                   <Typography>
                     <span>From: &nbsp;</span>
-                    <span>{moment(leave_date).format("MM/DD/YYYY")}</span>
+                    <span>{moment(start_date).format("MM/DD/YYYY")}</span>
                   </Typography>
                 </div>
                 <div className={classes.infoRowItem}>
-                  <CalendarMonthIcon fill="#FC443E" />
+                  <CalendarMonthIcon htmlColor="#FC443E" />
                   <Typography>
                     <span>Till: &nbsp;</span>
                     <span>
@@ -58,25 +58,21 @@ class Card extends Component {
             </div>
             <div className={classes.infoRow}>
               <div className={classes.infoRowItem}>
-                <CalendarMonthIcon fill="#4AACEB" />
+                <CalendarMonthIcon htmlColor="#4AACEB" />
                 <Typography>
                   <span>Date Applied: &nbsp;</span>
                   <span>{moment(date_applied).format("MM/DD/YYYY")}</span>
                 </Typography>
               </div>
-              <Hidden only={["sm", "xs"]}>
-                <div className={classes.infoRowItem}>
-                  <ArticleIcon fill="#eb8f15" />
-                  <Typography>
-                    <span className="bold">Reason: &nbsp;</span>
-                    <span>
-                      {reason.length > 25
-                        ? `${reason.slice(0, 50)}...`
-                        : reason}
-                    </span>
-                  </Typography>
-                </div>
-              </Hidden>
+              <div className={classes.infoRowItem}>
+                <ArticleIcon htmlColor="#eb8f15" />
+                <Typography>
+                  <span>Reason: &nbsp;</span>
+                  <span>
+                    {reason.length > 20 ? `${reason.slice(0, 20)}...` : reason}
+                  </span>
+                </Typography>
+              </div>
             </div>
           </div>
           <div className={classes.right}>
@@ -92,8 +88,8 @@ class Card extends Component {
 const materialStyles = (theme) => ({
   root: {
     backgroundColor: "#fff",
-    borderRadius: "0.3125rem",
-    boxShadow: "rgb(0 0 0 / 5%) 0px 0px 12px 0px",
+    borderRadius: "0.425rem",
+    boxShadow: "0px 2px 8px 3px rgba(0,0,0,0.1)",
     boxSizing: "border-box",
     "&:not(:last-child)": { marginBottom: "1.5rem" },
   },
@@ -115,7 +111,7 @@ const materialStyles = (theme) => ({
     fontWeight: 500,
     lineHeight: 1,
     fontSize: "1.5rem",
-    marginBottom: "1.25rem",
+    marginBottom: "1.25rem !important",
   },
   infoRow: {
     display: "flex",
@@ -131,7 +127,8 @@ const materialStyles = (theme) => ({
   infoRowItem: {
     display: "flex",
     alignItems: "center",
-    width: "14rem",
+    width: "16rem",
+    whiteSpace: "nowrap",
     "& > :first-child": {
       marginRight: "0.75rem",
     },

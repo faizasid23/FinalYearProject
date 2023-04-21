@@ -11,7 +11,8 @@ import {
   ButtonBase,
   InputAdornment,
   IconButton,
-  CircularProgress
+  CircularProgress,
+  Checkbox
 } from "@mui/material";
 import { withStyles } from "@mui/styles";
 import Alert from "@mui/material/Alert";
@@ -29,6 +30,7 @@ import { updateAuthorizationToken } from "../../apis/axiosConfig";
 import { setUser } from "../../redux/ActionCreators";
 // Wrapping our login screen in this component
 import LoginContainer from "../AuthScreen";
+import PasswordResetModal from "../PasswordResetModal";
 
 class LoginForm extends Component {
   constructor(props) {
@@ -41,7 +43,8 @@ class LoginForm extends Component {
       role: this.getRole(),
       errors: {},
       submitMessage: false,
-      isSubmitLoading: false
+      isSubmitLoading: false,
+      showPasswordReset: false
     };
     this.INPUTS = {
       email: {
@@ -231,6 +234,22 @@ class LoginForm extends Component {
               ),
             }}
           />
+          <div className={classes.formFooter}>
+            <div className={classes.rememberMe}>
+              <Checkbox
+                name="isRemember"
+                checked={this.state.isRemember}
+              />
+              <Typography>Keep me logged in </Typography>
+            </div>
+            <Typography
+              className={classes.forgotPasswordText}
+              onClick={() => this.setState({ showPasswordReset: true })}
+            >
+              Forgot Password?
+            </Typography>
+          </div>
+
           {/* Alert / Toast messages from API hitting */}
           {this.state.submitMessage && (
             <Alert
@@ -248,6 +267,7 @@ class LoginForm extends Component {
             />
           ) : (
             <ButtonBase
+              type="submit"
               tabIndex={7}
               class={classes.submitButton}
               onClick={this.handleLoginClick}
@@ -267,6 +287,12 @@ class LoginForm extends Component {
             </Link>
           </Typography>
         </div>
+        {this.state.showPasswordReset && (
+          <PasswordResetModal
+            role={this.state.role}
+            handleClose={() => this.setState({ showPasswordReset: false })}
+          />
+        )}
       </LoginContainer>
     );
   }
@@ -308,7 +334,21 @@ const materialStyles = (theme) => ({
     fontWeight: 500,
     textDecoration: "none",
     color: theme.palette.primary.main
-  }
+  },
+  formFooter: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: 'center'
+  },
+  rememberMe: {
+    display: "flex",
+    alignItems: 'center'
+  },
+  forgotPasswordText: {
+    fontSize: "0.875rem",
+    color: theme.palette.primary.main,
+    cursor: "pointer",
+  },
 });
 
 const mapDispatchToProps = (dispatch) => {

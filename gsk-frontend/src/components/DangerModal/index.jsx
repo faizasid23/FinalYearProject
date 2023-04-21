@@ -59,7 +59,7 @@ const DangerModal = (props) => {
         </div>
         {/* Footer */}
         <div className={classes.footer}>
-          <div style={{ width: "43%" }}>
+          <div>
             <RoundedButton
               handleSubmit={handleCancel}
               square={true}
@@ -68,14 +68,12 @@ const DangerModal = (props) => {
               Cancel
             </RoundedButton>
           </div>
-          <div style={{ width: "43%" }}>
+          <div>
             <ButtonBase
               onClick={isLoading ? () => 1 : handleModalSumbit}
-              className={clsx(
-                classes.controlButtons,
+              class={clsx(classes.controlButtons,
                 isLoading === true && classes.disabled
               )}
-              style={{ backgroundColor: "#FC443E", marginLeft: "auto" }}
             >
               {isLoading ? (
                 <CircularProgress style={{ width: "2.5rem" }} color="inherit" />
@@ -120,25 +118,17 @@ const materialStyles = (theme) => ({
   footer: {
     display: "flex",
     flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    marginBottom: "0.875rem",
+    justifyContent: "space-between"
   },
   controlButtons: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    width: "100%",
-    maxWidth: "10rem",
-    padding: "0 1rem",
+    minWidth: "8rem",
     height: "3.25rem",
-    backgroundColor: theme.palette.primary.main,
-    textAlign: "center",
+    backgroundColor: "#FC443E",
     color: "#fff",
     borderRadius: "0.3125rem",
     cursor: "pointer",
     userSelect: "none",
-    position: "relative",
+    border: 'none'
   },
   buttonText: {
     userSelect: "none",

@@ -7,10 +7,10 @@ import Main from '../../components/Main';
 import NotFound from '../../components/NotFound';
 // Importing the views / screens
 import Dashboard from "./screens/Dashboard";
-import Profile from "./screens/Profile";
 import Timesheets from "./screens/Timesheets";
 import Holidays from "./screens/Holidays";
 import EffortTracking from "./screens/EffortTracking";
+import Settings from "./screens/Settings";
 
 
 // This is the Index routing component for the student side
@@ -31,12 +31,13 @@ export function StudentRoutes(props) {
     }
 
     return (
-        <Routes>
+        <Routes key={props.location.key}>
             <Route path='dashboard' element={renderInMasterLayout("Dashboard", <Dashboard />)} />
             <Route path='timesheets' element={renderInMasterLayout("Timesheets", <Timesheets />)} />
             <Route path='holidays' element={renderInMasterLayout("Holidays", <Holidays />)} />
             <Route path='effortTracking' element={renderInMasterLayout("EffortTracking", <EffortTracking />)} />
-            <Route path='profile' element={renderInMasterLayout("Profile", <Profile />)} />
+            {/* <Route path='profile' element={renderInMasterLayout("Profile", <Profile />)} /> */}
+            <Route path='settings' element={renderInMasterLayout("Settings", <Settings />)} />
             <Route path="*" element={<NotFound />} />
         </Routes>
     )

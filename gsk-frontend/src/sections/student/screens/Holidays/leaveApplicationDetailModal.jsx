@@ -4,28 +4,17 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  Chip,
   Grid,
   Typography,
   IconButton,
 } from "@mui/material";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import { withStyles } from "@mui/styles";
+import { renderStatus } from "../../../../utils/common";
 
 
 const LeaveApplicationDetailModal = (props) => {
-  let { handleClose, handleEdit, classes } = props;
-
-  const renderStatus = (status) => {
-    switch (status) {
-      case 1:
-        return <Chip label="Approved" className="pill-success" />;
-      case 2:
-        return <Chip label="Rejected" className="pill-danger" />;
-      default:
-        return <Chip label="Pending" className="pill-pending" />;
-    }
-  };
+  let { handleClose, item, classes } = props;
 
   return (
     <Dialog
@@ -41,7 +30,7 @@ const LeaveApplicationDetailModal = (props) => {
           </IconButton>
         </div>
       </DialogTitle>
-      <DialogContent className={classes.modalBody}>
+      <DialogContent class={classes.modalBody}>
         <Grid
           container
           spacing={1}
@@ -50,17 +39,17 @@ const LeaveApplicationDetailModal = (props) => {
         >
           <Grid item xs={6} sm={6} md={3}>
             <Typography className={classes.bold}>
-              {props.role === "employee" ? "Employer" : "Employee"}:
+              Student Name:
             </Typography>
           </Grid>
           <Grid item xs={6} sm={6} md={3}>
-            <Typography>{props.name}</Typography>
+            <Typography>{item.student_id?.name}</Typography>
           </Grid>
           <Grid item xs={6} sm={6} md={3}>
             <Typography className={classes.bold}>Status:</Typography>
           </Grid>
           <Grid item xs={6} sm={6} md={3}>
-            {renderStatus(props.item.status)}
+            {renderStatus(item.status)}
           </Grid>
 
           <Grid item xs={6} sm={6} md={3}>
@@ -68,7 +57,7 @@ const LeaveApplicationDetailModal = (props) => {
           </Grid>
           <Grid item xs={6} sm={6} md={3}>
             <Typography>
-              {moment(props.item.leave_date).format("MM/DD/YYYY")}
+              {moment(item.start_date).format("MM/DD/YYYY")}
             </Typography>
           </Grid>
 
@@ -77,9 +66,9 @@ const LeaveApplicationDetailModal = (props) => {
           </Grid>
           <Grid item xs={6} sm={6} md={3}>
             <Typography>
-              {props.item.end_date
-                ? moment(props.item.end_date).format("MM/DD/YYYY")
-                : moment(props.item.leave_date).format("MM/DD/YYYY")}
+              {item.end_date
+                ? moment(item.end_date).format("MM/DD/YYYY")
+                : moment(item.start_date).format("MM/DD/YYYY")}
             </Typography>
           </Grid>
 
@@ -88,7 +77,7 @@ const LeaveApplicationDetailModal = (props) => {
           </Grid>
           <Grid item xs={6} sm={6} md={3}>
             <Typography>
-              {moment(props.item.created_at).format("MM/DD/YYYY")}
+              {moment(item.date_applied).format("MM/DD/YYYY")}
             </Typography>
           </Grid>
           <Grid container item xs={3}>
@@ -99,7 +88,7 @@ const LeaveApplicationDetailModal = (props) => {
           <Grid container item xs={3}>
             <Typography>
               <span style={{ textTransform: "capitalize" }}>
-                {props.item.leave_type?.name}
+                {item.leave_type}
               </span>
             </Typography>
           </Grid>
@@ -112,7 +101,7 @@ const LeaveApplicationDetailModal = (props) => {
 
           <Grid item xs={12} md={9}>
             <Typography style={{ whiteSpace: "pre-wrap", wordBreak: "break" }}>
-              {props.item.reason}
+              {item.reason}
             </Typography>
           </Grid>
         </Grid>
@@ -151,8 +140,8 @@ const materialStyles = (theme) => ({
     },
   },
   dialogPaper: { maxWidth: 680, width: 600 },
-  bold: { fontWeight: 500 },
-  modalBody: { padding: "1rem" },
+  bold: { fontWeight: "600 !important" },
+  modalBody: { padding: "1.25rem" },
   container: {
     "& p": { height: 34 },
   },

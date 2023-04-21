@@ -376,34 +376,36 @@ class RegisterForm extends Component {
                 )
               }}
             />
+
+            {/* for error triggering */}
+            {this.state.submitMessage && (
+              <Alert
+                variant="standard"
+                severity={this.state.submitMessage.status}
+                onClose={this.clearSubmitMessage}
+              >
+                {this.state.submitMessage.message}
+              </Alert>
+            )}
           </div>
-          {/* for error triggering */}
-          {this.state.submitMessage && (
-            <Alert
-              variant="standard"
-              severity={this.state.submitMessage.status}
-              onClose={this.clearSubmitMessage}
+          {/* Form Fields End */}
+
+          {/* if the api call is made show loader otherwise a button */}
+          {this.state.isSubmitLoading ? (
+            <CircularProgress
+              style={{ color: "#F36633", height: "2.5rem", width: "2.5rem", alignSelf: 'center' }}
+            />
+          ) : (
+            <ButtonBase
+              type="submit"
+              tabIndex={7}
+              class={classes.submitButton}
+              onClick={this.handleSubmit}
             >
-              {this.state.submitMessage.message}
-            </Alert>
+              <Typography>Register</Typography>
+            </ButtonBase>
           )}
         </div>
-        {/* Form Fields End */}
-
-        {/* if the api call is made show loader otherwise a button */}
-        {this.state.isSubmitLoading ? (
-          <CircularProgress
-            style={{ color: "#fff", height: "2.5rem", width: "2.5rem" }}
-          />
-        ) : (
-          <ButtonBase
-            tabIndex={7}
-            class={classes.submitButton}
-            onClick={this.handleSubmit}
-          >
-            <Typography>Register</Typography>
-          </ButtonBase>
-        )}
         <div className={classes.alreadyAccountContainer}>
           <Typography>
             Already have an account?

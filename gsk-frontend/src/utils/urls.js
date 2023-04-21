@@ -1,15 +1,17 @@
 export const studentUrls = {
     Dashboard: "/student/dashboard",
-    Profile: "/student/profile",
     Timesheets: "/student/timesheets",
     Holidays: "/student/holidays",
-    EffortTracking: "/student/effortTracking"
+    EffortTracking: "/student/effortTracking",
+    Settings: "/student/settings"
 };
 
 export const managerUrls = {
     Dashboard: "/manager/dashboard",
-    Profile: "/manager/profile",
+    Students: "/manager/students",
+    StudentById: "/manager/students/",
     Timesheets: "/manager/timesheets",
     Holidays: "/manager/holidays",
-    EffortTracking: "/manager/effortTracking"
+    EffortTracking: "/manager/effortTracking",
+    Settings: "/manager/settings"
 };

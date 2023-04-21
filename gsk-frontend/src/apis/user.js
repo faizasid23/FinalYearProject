@@ -42,12 +42,12 @@ export const loginStudent = (data) => {
 
 export const loginManager = (data) => {
     let result = axios
-        .post(`manager/login`, data)
+        .post(`auth/manager/login`, data)
         .then((res) => {
             if (res.data.status === "success") {
                 return {
                     status: "success",
-                    data: res.data.data,
+                    data: res.data,
                     message: "Manager logged in successfully",
                 };
             } else {
@@ -110,3 +110,53 @@ export const registerStudent = (data) => {
         });
     return result;
 };
+
+// Forget Password APIs Start
+export const findAccount = (data) => {
+    let result = axios
+        .post(`auth/forget-password`, data)
+        .then((res) => {
+            return res.data;
+        })
+        .catch((err) => {
+            return { status: "error", message: "Some issue occured" };
+        });
+    return result;
+};
+
+export const sendCode = (data) => {
+    let result = axios
+        .post(`auth/reset-code`, data)
+        .then((res) => {
+            return res.data;
+        })
+        .catch((err) => {
+            return { status: "error", message: "Some issue occured" };
+        });
+    return result;
+};
+
+export const verifyCode = (data) => {
+    let result = axios
+        .post(`auth/reset-code-verify`, data)
+        .then((res) => {
+            return res.data;
+        })
+        .catch((err) => {
+            return { status: "error", message: "Some issue occured" };
+        });
+    return result;
+};
+
+export const resetPassword = (data) => {
+    let result = axios
+        .post(`auth/reset-password`, data)
+        .then((res) => {
+            return res.data;
+        })
+        .catch((err) => {
+            return { status: "error", message: "Some issue occured" };
+        });
+    return result;
+};
+// Forget Password APIs End

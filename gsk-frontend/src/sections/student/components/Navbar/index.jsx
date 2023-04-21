@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 // importing material UI stuff
 import { Avatar, Box, ButtonBase, ClickAwayListener, Fade, Paper, Popper, Tooltip, Typography } from '@mui/material';
 import { withStyles } from "@mui/styles";
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+// import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 // importing logo for the nav bar
@@ -57,7 +57,7 @@ export const Index = (props) => {
                             >
                                 <Box>
                                     <Box className={classes.profilePopperTop}>
-                                        <ButtonBase
+                                        {/* <ButtonBase
                                             disableRipple
                                             class={classes.profilePopperButton}
                                             style={{ marginBottom: 10 }}
@@ -67,7 +67,7 @@ export const Index = (props) => {
                                             <Typography className={classes.link}>
                                                 Profile
                                             </Typography>
-                                        </ButtonBase>
+                                        </ButtonBase> */}
                                         <ButtonBase
                                             disableRipple
                                             class={classes.profilePopperButton}

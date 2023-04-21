@@ -29,7 +29,7 @@ const MaterialStyles = (theme) => ({
     paddingLeft: "3rem",
     paddingRight: "3rem",
     '& > :first-child': {
-      maxWidth: 1160,
+      minWidth: 1160,
       width: '100%'
     }
   }

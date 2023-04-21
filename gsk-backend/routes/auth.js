@@ -1,6 +1,11 @@
 const express = require('express');
 
-const { RegisterManager, LoginManager, RegisterStudent, LoginStudent, protectManager, protectStudent } = require('../middleware/auth');
+const { RegisterManager, LoginManager,
+    RegisterStudent, LoginStudent,
+    protectManager, protectStudent,
+    resetPassword, forgetPassword,
+    resetCode, codeVerify
+} = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -10,7 +15,9 @@ router.post('/student/register', RegisterStudent);
 router.post('/student/login', LoginStudent);
 router.get('/manager/validate-token', protectManager);
 router.get('/student/validate-token', protectStudent);
-// router.get('/logout', logOut);
-// router.get('/home', home);
+router.post('/reset-password', resetPassword);
+router.post('/forget-password', forgetPassword);
+router.post('/reset-code', resetCode);
+router.post('/reset-code-verify', codeVerify);
 
 module.exports = router;

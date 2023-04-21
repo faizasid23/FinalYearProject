@@ -2,9 +2,13 @@ const jwt = require('jsonwebtoken');
 const catchAsync = require('../utils/catchAsync');
 const APIError = require('../utils/APIError');
 const { promisify } = require('util');
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 // Importing our modals here for the DB ... 
 const Manager = require('../models/Manager');
 const Student = require('../models/Student');
+const ResetCode = require('../models/ResetCode');
+const sendEmail = require('../utils/email');
 
 const signToken = id => {
 	return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -205,3 +209,115 @@ exports.protectManager = catchAsync(async (req, res, next) => {
 		});
 	}
 });
+
+// Forgot Password handlers
+exports.forgetPassword = catchAsync(async (req, res, next) => {
+	const { email, type } = req.body;
+
+	let db = type === "student" ? Student : Manager;
+
+	let query = await db.findOne({ email });
+
+	if (!query) {
+		return next(new APIError(`Cannot find your info in DB.`, 200, { email: ["This email does not exist."] }));
+	}
+	else {
+		res.status(200).json({ status: 'success', data: { email: query?.email.replace(/(?<=\w{2})\w/g, '*') } });
+	}
+});
+
+exports.resetCode = catchAsync(async (req, res, next) => {
+	const { email, type } = req.body;
+
+	let db = type === "student" ? Student : Manager;
+
+	let query = await db.findOne({ email });
+
+	if (query) {
+
+		let token = await ResetCode.findOne({ email });
+
+		if (token) await ResetCode.deleteOne();
+
+		let resetToken = crypto.randomBytes(3).toString("hex");
+
+		const hash = await bcrypt.hash(resetToken, Number(10));
+
+		await new ResetCode({ email, token: hash, createdAt: Date.now() }).save();
+
+		const options = {
+			email: email,
+			subject: "Here is your Reset Code!",
+			message: "Here is your confirmation code for password reset.",
+			body: `Hi <b>${query?.name}!</b>
+			<br>
+			<br>
+			Your code for password reset is <b>${resetToken}</b>. Make sure you don't share this code with others.
+			<br>
+			<br>
+			Thank You!`
+		}
+		sendEmail(options).then((response) => {
+			if (response) res.status(200).json({ status: 'success' });
+			else return next(new APIError(`There was a problem sending code to the email.`, 200));
+		}).catch((error) => {
+			return next(new APIError(`There was a problem sending code to the email.`, 200, error));
+		});
+	}
+	else {
+		return next(new APIError(`User does not exist.`, 200));
+	}
+});
+
+exports.codeVerify = catchAsync(async (req, res, next) => {
+	const { code, email } = req.body;
+
+	let passwordResetToken = await ResetCode.findOne({ email });
+
+	if (!passwordResetToken)
+		return next(new APIError(`Invalid or expired password reset code`, 200, { code: ['This code has expired.'] }));
+
+	const isValid = await bcrypt.compare(code, passwordResetToken.token);
+
+	if (!isValid)
+		return next(new APIError(`Invalid or expired password reset code`, 200, { code: ['This code is incorrect.'] }));
+
+	res.status(200).json({ status: 'success' });
+
+})
+
+exports.resetPassword = catchAsync(async (req, res, next) => {
+	const { id, password, old_password, type, email } = req.body;
+
+	let db = type === "student" ? Student : Manager;
+
+	if (old_password) {
+
+		let query = await db.findById(id).select('+password');
+
+		if (!query) {
+			return next(new APIError(`Cannot find your account in our database.`, 200));
+		}
+		else if (!(await query.correctPassword(old_password, query.password))) {
+			return next(new APIError(`Password is not correct`, 200, { old_password: ["The password provided is incorrect."] }));
+		}
+		else {
+			query.password = password
+			query.save();
+
+			res.status(200).json({ status: 'success' });
+		}
+	} else {
+		let query = await db.findOne({ email }).select('+password');
+
+		if (!query) {
+			return next(new APIError(`Cannot find your account in our database.`, 200));
+		}
+
+		query.password = password
+		query.save();
+
+		res.status(200).json({ status: 'success' });
+	}
+});
+// handlers end

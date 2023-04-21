@@ -12,6 +12,18 @@ code {
     monospace;
 }
 
+/* Turn on custom 8px wide scrollbar */
+::-webkit-scrollbar {
+  width: 9px; 
+  height: 10px;
+  background-color: #6f707a;
+  -webkit-border-radius: 100px;
+}
+
+.lgPill{
+  height: 3rem!important;
+  min-width: 8rem ;
+}
 
 .pill-pending {
   border-radius: 10px !important;

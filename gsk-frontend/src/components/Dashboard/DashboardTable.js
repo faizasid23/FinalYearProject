@@ -15,27 +15,16 @@ function DashboardTable(props) {
   let { history } = props;
 
   const classes = styles();
-  let { api, type, query } = props;
+  let { api } = props;
 
-  const [data, setData] = useState([
-    // { category: "Loreum Ipsum", date: '03 March 2023', status: 0 },
-    // { category: "Loreum Ipsum", date: '23 Feb 2023', status: 1 },
-    // { category: "Loreum Ipsum", date: '03 Jan 2023', status: 2 }
-  ]);
+  const [data, setData] = useState([]);
 
-  // useEffect(() => {
-  //   window.scrollTo(0, 0);
+  useEffect(() => {
+    window.scrollTo(0, 0);
 
-  //   if (type) {
-  //     api(type, query ?? "").then((result) => {
-  //       setData(result?.data.slice(0, 4) ?? []);
-  //     });
-  //   }
-  //   else {
-  //     api(query ?? "").then((result) => { setData(result?.data ?? []); });
-  //   }
-  //   // eslint-disable-next-line
-  // }, [api]);
+    api().then((result) => { setData(result?.data ?? []); });
+    // eslint-disable-next-line
+  }, [api]);
 
   return (
     <div className={classes.sideWidget}>
@@ -99,7 +88,7 @@ function DashboardTable(props) {
               className={classes.link}
               onClick={() => {
                 if (props.url) {
-                  history.push(props.url);
+                  history(props.url);
                   if (props.updateSelectedIndex !== undefined) {
                     props.updateSelectedIndex();
                   }

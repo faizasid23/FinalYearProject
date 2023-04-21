@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { connect } from 'react-redux'
 import { withStyles } from '@mui/styles';
 import { Alert, CircularProgress, Snackbar, Typography } from '@mui/material';
@@ -13,6 +13,8 @@ import LeaveCard from '../../components/Cards/LeaveCard';
 import LeaveApplicationDetailModal from './leaveApplicationDetailModal';
 import EditLeaveModal from './editLeaveModal';
 import NoDataPlaceholder from '../../../../components/NoDataPlaceholder';
+// API call URLs
+import { deleteLeave, getLeaves } from '../../../../apis/student';
 
 export const Index = (props) => {
 
@@ -24,17 +26,72 @@ export const Index = (props) => {
     const [showToast, setShowToast] = useState(null);
     const [isDataLoading, setIsDataLoading] = useState(false);
     const [data, setData] = useState([]);
-    const [id, setId] = useState(null);
+
+    const getDataFromAPI = useCallback(() => {
+        setIsDataLoading(true);
+        getLeaves(user?._id).then((result) => {
+            if (result.status === "success") {
+                setIsDataLoading(false)
+                setData(result.data)
+            } else {
+                setIsDataLoading(false)
+                setShowToast({
+                    status: "error",
+                    message: "Cannot get the leaves data at the moment. Please try again later"
+                })
+            }
+        }).catch((error) => {
+            setIsDataLoading(false)
+            setShowToast({
+                status: "error",
+                message: "Cannot get the leaves data at the moment. Please try again later"
+            })
+        });
+    }, [user?._id]);
 
     useEffect(() => {
-    }, [])
+        window.scrollTo(0, 0);
+        getDataFromAPI();
+    }, [getDataFromAPI])
+
 
     const handleLeavesEditCreate = () => {
-
+        if (showCreateEditModal._id === undefined) {
+            setShowCreateEditModal(null)
+            setShowToast({
+                status: "success",
+                message: "Leave applied successfully"
+            })
+            getDataFromAPI()
+        } else {
+            setShowCreateEditModal(null)
+            setShowToast({
+                status: "success",
+                message: "Leave application updated successfully"
+            })
+            getDataFromAPI()
+        }
     }
 
     const handleDelete = () => {
-
+        let deletedItem = deleteLeave(showDeleteModal._id).then((result) => {
+            if (result.status === "success") {
+                setShowDeleteModal(null)
+                setShowToast({
+                    status: "success",
+                    message: "Leave withdrawn successfully"
+                })
+                getDataFromAPI();
+                return true;
+            } else {
+                setShowToast({
+                    status: "error",
+                    message: result.message ?? "Leave withdraw failed",
+                })
+                return false;
+            }
+        });
+        return deletedItem;
     }
 
     const renderActions = (index) => {
@@ -53,7 +110,7 @@ export const Index = (props) => {
                         />
                         <ActionItem
                             text="Delete"
-                            handleClick={() => setShowDeleteModal(index)}
+                            handleClick={() => setShowDeleteModal(data[index])}
                         />
                     </>
                 )}
@@ -69,7 +126,7 @@ export const Index = (props) => {
                 </div>
                 <Typography
                     class={classes.addBtn}
-                    onClick={() => setShowCreateEditModal({})}
+                    onClick={() => setShowCreateEditModal({ student_id: user?._id })}
                 >
                     Apply Leave
                 </Typography>
@@ -83,12 +140,13 @@ export const Index = (props) => {
                     <>
                         {data.map((item, index) => (
                             <LeaveCard
+                                key={index}
                                 employee_name={user.name}
-                                date_applied={item.created_at}
-                                leave_date={item.leave_date}
+                                date_applied={item.date_applied}
+                                start_date={item.start_date}
                                 end_date={item.end_date}
-                                leave_type={item.leave_type?.name ?? "NA"}
-                                reason={item.reason ?? ""}
+                                leave_type={item.leave_type}
+                                reason={item.reason}
                                 status={renderStatusPill(item.status)}
                                 renderControls={() => renderActions(index)}
                             />
@@ -120,8 +178,8 @@ export const Index = (props) => {
             {
                 showCreateEditModal !== null && (
                     <EditLeaveModal
-                        id={id}
-                        item={showCreateEditModal}
+                        role='student'
+                        leave={showCreateEditModal}
                         handleClose={() => setShowCreateEditModal(null)}
                         handleSubmit={handleLeavesEditCreate}
                     />
@@ -131,18 +189,17 @@ export const Index = (props) => {
                 showDeleteModal !== null && (
                     <DangerModal
                         heading="Delete Confirmation"
-                        message={` Are you sure you want to delete the leave application?`}
-                        buttonText="Delete"
+                        message={`Are you sure you want to delete this leave application?`}
+                        buttonText="Yes"
                         item={showDeleteModal}
-                        handleCancel={setShowDeleteModal(null)}
-                        handleSubmit={() => handleDelete(this.state.data[this.state.showDeleteModal])}
+                        handleCancel={() => setShowDeleteModal(null)}
+                        handleSubmit={handleDelete}
                     />
                 )
             }
             {
                 showDetailModal !== null && (
                     <LeaveApplicationDetailModal
-                        name={showDetailModal?.student?.name}
                         item={showDetailModal}
                         handleClose={() => setShowDetailModal(null)}
                     />
@@ -162,6 +219,7 @@ const materialStyles = (theme) => ({
         display: "flex",
         justifyContent: 'space-between',
         alignItems: 'center',
+        marginBottom: "1.25rem"
     },
     title: {
         fontSize: "1.75rem",

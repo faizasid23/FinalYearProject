@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
-import moment from "moment";
+import dayjs from "dayjs";
 import {
   Typography,
-  Hidden,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -20,27 +19,39 @@ import { LEAVE_STATUSES } from "../../../../utils/common";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useForm, Controller } from "react-hook-form";
+import { updateHolidayRequest } from "../../../../apis/manager";
 
 const schema = yup.object().shape({
-  employee_applied_job_id: yup.string().nullable(),
-  leave_date: yup.date().nullable()
-    .max(yup.ref("end_date"), "Start date can't be after end date. ")
-    .required("Start date is required. ")
+  student_id: yup.string().nullable(),
+  start_date: yup.date().required("Start date is required. ")
     .typeError("Invalid Date Format (format: MM/DD/YYYY).  "),
-  end_date: yup.date().nullable()
-    .min(yup.ref("leave_date"), "End date can't be before start date. ")
-    .required("End date is required. ")
+  end_date: yup.date().required("End date is required. ")
+    .min(yup.ref("start_date"), "End date can't be before start date. ")
     .typeError("Invalid Date Format (format: MM/DD/YYYY).  "),
-  leave_type: yup.object().nullable().required("Select a leave type. "),
-  reason: yup.string().required("Kindly provide a reason. ")
+  leave_type: yup.lazy(value => {
+    switch (typeof value) {
+      case 'object':
+        return yup.object().required("Select a leave type. "); // schema for object
+      case 'string':
+        return yup.string().required("Select a leave type. ") // schema for string
+      default:
+        return yup.mixed(); // here you can decide what is the default
+    }
+  }),
+  reason: yup.string().required("Provide a reason for your leave. ")
     .test('len', 'Description is too short, explain more. ', val => val.length > 5)
     .nullable()
 });
 
-function EditLeaveModal(props) {
-  let { item, classes, handleClose } = props;
+const LEAVE_TYPES = [
+  { name: 'Casual Leave', value: 'Casual' },
+  { name: 'Sick Leave', value: 'Sick' },
+  { name: 'Vacation Leave', value: 'Vacation' },
+]
 
-  const [leaveTypes, setLeaveTypes] = useState([]);
+function EditLeaveModal(props) {
+  let { leave, classes, handleClose } = props;
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState(null);
 
@@ -53,8 +64,8 @@ function EditLeaveModal(props) {
     mode: "onBlur",
     resolver: yupResolver(schema),
     defaultValues: {
-      employee_applied_job_id: null,
-      leave_date: null,
+      student_id: null,
+      start_date: null,
       end_date: null,
       leave_type: null,
       status: null,
@@ -63,70 +74,79 @@ function EditLeaveModal(props) {
   });
 
   useEffect(() => {
-    if (props.item) {
-      setValue("leave_date", item.leave_date ? moment(item.leave_date) : null);
-      setValue("end_date", item.end_date ? moment(item.end_date) : null);
-      setValue("leave_type", item.leave_type ?? null);
-      setValue("reason", item.reason);
+    if (leave) {
+      setValue("start_date", leave.start_date ? dayjs(leave.start_date) : null);
+      setValue("end_date", leave.end_date ? dayjs(leave.end_date) : null);
+      setValue("leave_type", leave.leave_type ?? null);
+      setValue("reason", leave.reason);
       setValue(
         "status",
-        LEAVE_STATUSES.filter((status) => status.value === item.status)[0] ?? null
-      );
-    } else {
-      setValue(
-        "status",
-        LEAVE_STATUSES.filter((status) => status.value === 0)[0] ?? null
+        LEAVE_STATUSES.filter((status) => status.value === leave.status)[0] ?? null
       );
     }
   }, [
-    item.leave_date,
-    item.end_date,
-    item.leave_type,
-    item.reason,
-    item.status,
-    props.item,
+    leave,
     setValue,
   ]);
 
   const onSubmit = (data) => {
     setIsSubmitting(true);
 
-    let status = typeof data.status === "object" ? data.status?.value : data.status;
-    let submit_data = {
-      leave_type_id: data.leave_type?.id ?? null,
-      reason: data.reason ?? null,
-      leave_date: moment(data.leave_date).format("YYYY-MM-DD HH:mm:ss") ?? null,
-      end_date: moment(data.end_date).format("YYYY-MM-DD HH:mm:ss") ?? null,
-      employee_applied_job_id: props.employee_applied_job_id,
-      status: status
-    };
-    let api = props.item.id === undefined ? applyLeave : updateLeave;
+    if (props.role !== "student") {
+      let params = {
+        status: data?.status?.value ?? data?.status
+      };
 
-    api(submit_data, props.item.id).then((result) => {
-      if (result.status === "success") {
-        setIsSubmitting(false);
-        props.handleSubmit();
-      } else {
-        setIsSubmitting(false);
-        setSubmitMessage({
-          status: "error",
-          message: result.message ? result.message : "Error has occured",
-        });
-      }
-    });
+      updateHolidayRequest(props.leave?._id, params).then((result) => {
+        if (result.status === "success") {
+          setIsSubmitting(false);
+          props.handleSubmit();
+        } else {
+          setIsSubmitting(false);
+          setSubmitMessage({
+            status: "error",
+            message: result.message ?? "Error has occured",
+          });
+        }
+      });
+    }
+    else {
+      let params = {
+        student_id: leave.student_id?._id ?? leave.student_id,
+        leave_type: data.leave_type?.value ?? data.leave_type,
+        reason: data.reason ?? null,
+        start_date: dayjs(data.start_date).format("YYYY-MM-DD") ?? null,
+        end_date: dayjs(data.end_date).format("YYYY-MM-DD") ?? null,
+        date_applied: dayjs().format("YYYY-MM-DD"),
+        status: 0
+      };
+
+      let api = props.leave?._id === undefined ? applyLeave : updateLeave;
+
+      api(params, props.leave?._id).then((result) => {
+        if (result.status === "success") {
+          setIsSubmitting(false);
+          props.handleSubmit();
+        } else {
+          setIsSubmitting(false);
+          setSubmitMessage({
+            status: "error",
+            message: result.message ?? "Error has occured",
+          });
+        }
+      });
+    }
   };
 
-  let isEditOrCreate = item.id === undefined ? "Create" : "Edit";
-  let buttonText = item.id === undefined ? "Submit" : "Save";
+  let isEditOrCreate = props?.role !== "student" ? "Edit" : leave.id === undefined ? "Create" : "Edit";
+  let buttonText = leave.id === undefined ? "Submit" : "Save";
 
   return (
     <Dialog open={true} classes={{ paper: classes.root }} onClose={handleClose}>
       <DialogTitle className={classes.head}>
         <div className={classes.headInner}>
           <Typography>
-            {isEditOrCreate === "Create"
-              ? "Apply Leave"
-              : "Edit Leave Application"}{" "}
+            {isEditOrCreate === "Create" ? "Apply Leave" : "Edit Leave"}
           </Typography>
           <IconButton onClick={handleClose}>
             <CancelOutlinedIcon />
@@ -135,35 +155,25 @@ function EditLeaveModal(props) {
       </DialogTitle>
       <DialogContent classes={{ root: classes.body }}>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <Grid container spacing={4} class={classes.container}>
+          <Grid container class={classes.container}>
             <Grid md={12} item>
               <Controller
-                name="leave_date"
+                name="start_date"
                 control={control}
                 render={({ field: { ref, ...rest } }) => (
                   <DatePicker
-                    required
-                    fullWidth={true}
+                    disabled={props.role !== "student"}
                     label="Start Date *"
                     inputVariant="outlined"
                     onClose={rest.onBlur}
-                    // onError={Boolean(errors.leave_date)}
+                    slotProps={{
+                      textField: {
+                        error: Boolean(errors.start_date),
+                        helperText: errors.start_date?.message
+                      }
+                    }}
                     {...rest}
                   />
-                  // <KeyboardDatePicker
-                  //   label="Start Date "
-                  //   inputVariant="outlined"
-                  //   required
-                  //   format="MM/DD/YYYY"
-                  //   placeholder="MM/DD/YYYY"
-                  //   fullWidth={true}
-                  //   autoOk={true}
-                  //   onClose={rest.onBlur}
-                  //   error={Boolean(errors.leave_date)}
-                  //   helperText={errors.leave_date?.message}
-                  //   KeyboardButtonProps={{ "aria-label": "Start Date" }}
-                  //   {...rest}
-                  // />
                 )}
               />
             </Grid>
@@ -174,28 +184,18 @@ function EditLeaveModal(props) {
                 render={({ field: { ref, ...rest } }) => {
                   return (
                     <DatePicker
-                      required
-                      fullWidth={true}
+                      disabled={props.role !== "student"}
                       label="End Date *"
                       inputVariant="outlined"
                       onClose={rest.onBlur}
-                      // onError={Boolean(errors.leave_date)}
+                      slotProps={{
+                        textField: {
+                          error: Boolean(errors.end_date),
+                          helperText: errors.end_date?.message
+                        }
+                      }}
                       {...rest}
                     />
-                    // <KeyboardDatePicker
-                    //   label="End Date "
-                    //   inputVariant="outlined"
-                    //   required
-                    //   format="MM/DD/YYYY"
-                    //   placeholder="MM/DD/YYYY"
-                    //   fullWidth={true}
-                    //   autoOk={true}
-                    //   onClose={rest.onBlur}
-                    //   error={Boolean(errors.end_date)}
-                    //   helperText={errors.end_date?.message}
-                    //   KeyboardButtonProps={{ "aria-label": "End Date" }}
-                    //   {...rest}
-                    // />
                   );
                 }}
               />
@@ -208,8 +208,10 @@ function EditLeaveModal(props) {
                 render={({ field }) => (
                   <Autocomplete
                     {...field}
-                    options={leaveTypes}
-                    getOptionLabel={(option) => option.name ?? ""}
+                    disabled={props.role !== "student"}
+                    options={LEAVE_TYPES}
+                    getOptionLabel={(option) => option.name ?? option}
+                    isOptionEqualToValue={(option, value) => option?.value === (value?.value ?? value)}
                     renderInput={(params) => (
                       <TextField
                         {...params}
@@ -235,6 +237,7 @@ function EditLeaveModal(props) {
                     {...field}
                     multiline
                     required
+                    disabled={props.role !== "student"}
                     variant="outlined"
                     label="Reason"
                     error={Boolean(errors.reason)}
@@ -246,8 +249,8 @@ function EditLeaveModal(props) {
                 )}
               />
             </Grid>
-            {/* {props.role !== "student" && (
-              <Grid item xs={12} sm={6}>
+            {props.role !== "student" && (
+              <Grid item md={12}>
                 <Controller
                   name="status"
                   control={control}
@@ -257,6 +260,7 @@ function EditLeaveModal(props) {
                       openOnFocus
                       options={LEAVE_STATUSES}
                       getOptionLabel={(option) => option.name ?? ""}
+                      isOptionEqualToValue={(option, value) => option?.value === (value?.value ?? value)}
                       renderInput={(params) => (
                         <TextField
                           {...params}
@@ -272,7 +276,7 @@ function EditLeaveModal(props) {
                   )}
                 />
               </Grid>
-            )} */}
+            )}
           </Grid>
           {submitMessage && (
             <div className={classes.row}>
@@ -332,8 +336,9 @@ const materialStyles = (theme) => ({
   body: { paddingTop: "1rem" },
   container: {
     padding: "2rem 0rem",
+    "& .MuiTextField-root": { width: "100%" },
     "& > *": {
-      padding: 5
+      padding: "0.75rem 0rem"
     },
     "& .MuiTextField-root > .MuiFormHelperText-root": {
       marginLeft: 2, marginRight: 0

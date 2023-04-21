@@ -160,8 +160,8 @@ class AppUI extends React.Component {
             : (
               isVerified ?
                 <Routes>
-                  <Route path="/student/*" element={<StudentRoutes />} />
-                  <Route path="/manager/*" element={<ManagerRoutes />} />
+                  <Route path="/student/*" element={<StudentRoutes key={this.props.location.key} {...this.props} />} />
+                  <Route path="/manager/*" element={<ManagerRoutes key={this.props.location.key} {...this.props} />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
                 :
