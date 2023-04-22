@@ -70,7 +70,7 @@ export const registerManager = (data) => {
             if (res.data.status === "success") {
                 return {
                     status: "success",
-                    data: res.data.data,
+                    data: res.data,
                     message: "Manager registered successfully",
                 };
             } else {
