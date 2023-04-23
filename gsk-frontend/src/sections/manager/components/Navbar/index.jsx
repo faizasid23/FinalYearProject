@@ -220,7 +220,8 @@ const materialStyles = (theme) => ({
         // marginTop: "5rem",
         borderRight: '1px solid #e3e3e3',
         boxShadow: "0px 2px 12px 0px rgba(0,0,0,0.1)",
-        zIndex: 999
+        zIndex: 999,
+        backgroundColor: '#fff'
     },
     SideBarLayout: {
         display: "flex",

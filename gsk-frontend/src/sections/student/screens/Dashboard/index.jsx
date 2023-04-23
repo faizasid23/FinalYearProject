@@ -86,17 +86,6 @@ export const Index = (props) => {
                     </Grid>
                     <Grid item xs={12} md={4}>
                         <DashboardTable
-                            title="Recent Timesheet"
-                            columns={latest_timesheet}
-                            url={studentUrls.Timesheets}
-                            urlText="View More"
-                            emptyText="No Recent Timesheet Data"
-                            emptyIcon={<ManageSearchIcon fontSize='large' />}
-                            api={getRecentTimesheet}
-                        />
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                        <DashboardTable
                             title="Recent Holidays"
                             columns={latest_holidays}
                             url={studentUrls.Holidays}
@@ -104,6 +93,17 @@ export const Index = (props) => {
                             emptyText="No Recent Holidays"
                             emptyIcon={<ManageSearchIcon fontSize='large' />}
                             api={getRecentHolidays}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                        <DashboardTable
+                            title="Recent Timesheet"
+                            columns={latest_timesheet}
+                            url={studentUrls.Timesheets}
+                            urlText="View More"
+                            emptyText="No Recent Timesheet Data"
+                            emptyIcon={<ManageSearchIcon fontSize='large' />}
+                            api={getRecentTimesheet}
                         />
                     </Grid>
                     <Grid item xs={12} md={4}>
